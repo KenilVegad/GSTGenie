@@ -1,83 +1,77 @@
+
 import * as React from 'react';
-import { 
-  BrowserRouter as Router, 
-  Routes, 
-  Route, 
-  useNavigate, 
-  useLocation,
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
   Navigate
 } from "react-router-dom";
-
+import { useTranslation } from 'react-i18next';
 import Navbar from './components/Navbar';
 import HomePage from './components/HomePage';
-import LandingPage from './components/LandingPage';
+import LoginPage from './components/LoginPage';
+import SignUpPage from './components/SignUpPage';
 import RegistrationWizard from './components/RegistrationWizard';
+import DocumentRepositoryPage from './components/DocumentRepositoryPage';
 import SupportPage from './components/SupportPage';
 import AboutPage from './components/AboutPage';
 import ProfilePage from './components/ProfilePage';
-import LoginPage from './components/LoginPage';
-import SignUpPage from './components/SignUpPage';
-import RemindersPage from './components/RemindersPage';
-import DocumentRepositoryPage from './components/DocumentRepositoryPage';
-import NewRegistrationPage from './components/NewRegistrationPage';
-import TrnLoginPage from './components/TrnLoginPage';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { LanguageProvider } from './contexts/LanguageContext';
+import ComplianceDashboard from './components/ComplianceDashboard';
+import RoleManagementPage from './components/RoleManagementPage'; // Import RoleManagementPage
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 
-const AppContent: React.FC<{
-  isAuthenticated: boolean;
-  onLogout: () => void;
-  onLogin: () => void;
-}> = ({ isAuthenticated, onLogout, onLogin }) => {
+const AppContent: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
+  const { language } = useLanguage();
+  const { i18n } = useTranslation();
+  const { isDark } = useTheme();
 
-  const handleStartRegistration = () => navigate('/new-registration');
-  const handleShowReminders = () => navigate('/reminders');
-  const handleShowDocumentRepository = () => navigate('/document-repository');
-  const handleBackToHome = () => navigate('/');
+  React.useEffect(() => {
+    i18n.changeLanguage(language);
+  }, [language, i18n]);
 
-  const shouldShowNavbar = true; // Always show Navbar
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+    navigate('/');
+  };
 
-  if (!isAuthenticated && location.pathname !== '/login' && location.pathname !== '/signup') {
-    return <Navigate to="/login" />;
-  }
+  const handleStartRegistration = () => {
+    navigate('/wizard');
+  };
+
+  const handleShowDocumentRepository = () => {
+    navigate('/document-repository');
+  };
+
+  const handleBackToHome = () => {
+    navigate('/');
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    navigate('/');
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
-      {shouldShowNavbar && (
-        <Navbar
-          isAuthenticated={isAuthenticated}
-          onLogout={onLogout}
-        />
-      )}
-      <main className={shouldShowNavbar ? "pt-20" : ""}>
+    <div className={`${isDark ? 'dark' : ''} min-h-screen bg-primary text-primary dark:bg-dark-primary dark:text-dark-primary font-sans`}>
+      <Navbar
+        isAuthenticated={isAuthenticated}
+        onLogout={handleLogout}
+      />
+      <main className={"pt-20"}>
         <Routes>
-          <Route path="/login" element={<LoginPage onLogin={onLogin} />} />
+          <Route path="/" element={!isAuthenticated ? <LoginPage onLoginSuccess={handleLogin} /> : <HomePage onStartRegistration={handleStartRegistration} onShowDocumentRepository={handleShowDocumentRepository} />} />
           <Route path="/signup" element={<SignUpPage />} />
-          <Route
-            path="/"
-            element={
-              isAuthenticated ? (
-                <HomePage
-                  onStartRegistration={handleStartRegistration}
-                  onShowReminders={handleShowReminders}
-                  onShowDocumentRepository={handleShowDocumentRepository}
-                />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route path="/landing" element={isAuthenticated ? <LandingPage onStartRegistration={handleStartRegistration} /> : <Navigate to="/login" />} />
-          <Route path="/wizard" element={isAuthenticated ? <RegistrationWizard onBackToHome={handleBackToHome} /> : <Navigate to="/login" />} />
-          <Route path="/reminders" element={isAuthenticated ? <RemindersPage /> : <Navigate to="/login" />} />
-          <Route path="/document-repository" element={isAuthenticated ? <DocumentRepositoryPage /> : <Navigate to="/login" />} />
-          <Route path="/support" element={isAuthenticated ? <SupportPage /> : <Navigate to="/login" />} />
-          <Route path="/about" element={isAuthenticated ? <AboutPage /> : <Navigate to="/login" />} />
-          <Route path="/profile" element={isAuthenticated ? <ProfilePage /> : <Navigate to="/login" />} />
-          <Route path="/new-registration" element={isAuthenticated ? <NewRegistrationPage /> : <Navigate to="/login" />} />
-          <Route path="/trn-login" element={isAuthenticated ? <TrnLoginPage /> : <Navigate to="/login" />} />
+          <Route path="/wizard" element={isAuthenticated ? <RegistrationWizard onBackToHome={handleBackToHome} /> : <Navigate to="/" />} />
+          <Route path="/document-repository" element={isAuthenticated ? <DocumentRepositoryPage /> : <Navigate to="/" />} />
+          <Route path="/support" element={isAuthenticated ? <SupportPage /> : <Navigate to="/" />} />
+          <Route path="/about" element={isAuthenticated ? <AboutPage /> : <Navigate to="/" />} />
+          <Route path="/profile" element={isAuthenticated ? <ProfilePage /> : <Navigate to="/" />} />
+          <Route path="/compliance" element={isAuthenticated ? <ComplianceDashboard /> : <Navigate to="/" />} />
+          <Route path="/role-management" element={isAuthenticated ? <RoleManagementPage /> : <Navigate to="/" />} /> {/* Add new route for RoleManagementPage */}
         </Routes>
       </main>
     </div>
@@ -85,25 +79,11 @@ const AppContent: React.FC<{
 };
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-  };
-
   return (
-    <Router>
+    <Router future={{ v7_relativeSplatPath: true }}>
       <ThemeProvider>
         <LanguageProvider>
-          <AppContent
-            isAuthenticated={isAuthenticated}
-            onLogin={handleLogin}
-            onLogout={handleLogout}
-          />
+          <AppContent />
         </LanguageProvider>
       </ThemeProvider>
     </Router>

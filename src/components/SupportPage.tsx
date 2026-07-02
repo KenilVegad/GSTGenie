@@ -1,187 +1,90 @@
+
 import React, { useState } from 'react';
-import { HelpCircle, Mail, Phone, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, HelpCircle, Mail, Phone, Send } from 'lucide-react';
 
 const SupportPage: React.FC = () => {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
-  });
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
 
   const faqs = [
-    {
-      question: "What documents are required for GST registration?",
-      answer: "You'll need PAN card, Aadhaar card, business incorporation certificate, address proof, bank account details, and photographs of authorized signatories."
-    },
-    {
-      question: "How long does GST registration take?",
-      answer: "Typically 3-7 working days after submission of complete application with all required documents."
-    },
-    {
-      question: "Is GST registration mandatory for all businesses?",
-      answer: "GST registration is mandatory for businesses with annual turnover exceeding ₹40 lakhs (₹20 lakhs for northeastern states)."
-    },
-    {
-      question: "Can I register for GST before starting my business?",
-      answer: "Yes, you can apply for GST registration before commencing business operations, but you must start business within 6 months."
-    },
-    {
-      question: "What is the GST registration fee?",
-      answer: "There's no fee for GST registration. However, some states may charge a nominal fee for certain business types."
-    }
+    { question: 'What is the purpose of this platform?', answer: 'This platform is designed to streamline tax and compliance processes, making it easier to manage your financial obligations.' },
+    { question: 'How do I upload a document?', answer: 'You can upload documents from the Integrated Document Repository page by clicking the \'Add New Document\' button.' },
+    { question: 'Can I export my data?', answer: 'Yes, you can export your data as a CSV file from the document repository page using the \'Export as CSV\' button.' },
+    { question: 'Is my data secure?', answer: 'We take data security seriously. All your data is encrypted and stored securely.' },
   ];
+
+  const handleAccordionClick = (index: number) => {
+    setActiveIndex(activeIndex === index ? null : index);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    alert('Thank you for your message! We will get back to you soon.');
-    setFormData({ name: '', email: '', subject: '', message: '' });
-  };
-
-  const toggleFaq = (index: number) => {
-    setOpenFaq(openFaq === index ? null : index);
+    // Handle form submission logic here
+    alert('Your message has been sent! We will get back to you shortly.');
+    setFormData({ name: '', email: '', message: '' });
   };
 
   return (
-    <div className="min-h-screen pt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
-          <HelpCircle className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Support Center</h1>
-          <p className="text-xl text-gray-600">
-            Get help with your GST registration process
-          </p>
-        </div>
+    <div className="container mx-auto p-4 md:p-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
+      <header className="text-center mb-12">
+        <h1 className="text-4xl font-extrabold text-gray-800 dark:text-white sm:text-5xl">Support Center</h1>
+        <p className="mt-4 text-xl text-gray-600 dark:text-gray-300">How can we help you today?</p>
+      </header>
 
-        <div className="grid lg:grid-cols-2 gap-12">
-          {/* FAQ Section */}
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
-            <div className="space-y-4">
-              {faqs.map((faq, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg">
-                  <button
-                    onClick={() => toggleFaq(index)}
-                    className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
-                  >
-                    <span className="font-medium text-gray-900">{faq.question}</span>
-                    {openFaq === index ? (
-                      <ChevronUp className="h-5 w-5 text-gray-500" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5 text-gray-500" />
-                    )}
-                  </button>
-                  {openFaq === index && (
-                    <div className="px-6 pb-4">
-                      <p className="text-gray-600">{faq.answer}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        {/* FAQ Section */}
+        <section>
+          <h2 className="text-3xl font-bold text-gray-700 dark:text-gray-200 mb-6 flex items-center"><HelpCircle className="mr-3 text-indigo-500" /> FAQs</h2>
+          <div className="space-y-4">
+            {faqs.map((faq, index) => (
+              <div key={index} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                <button onClick={() => handleAccordionClick(index)} className="w-full flex justify-between items-center p-5 text-left font-semibold text-gray-800 dark:text-white">
+                  {faq.question}
+                  <ChevronDown className={`transform transition-transform ${activeIndex === index ? 'rotate-180' : ''}`} />
+                </button>
+                {activeIndex === index && (
+                  <div className="p-5 border-t border-gray-200 dark:border-gray-700">
+                    <p className="text-gray-600 dark:text-gray-300">{faq.answer}</p>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
+        </section>
 
-          {/* Contact Form */}
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Contact Us</h2>
-            
-            {/* Contact Info */}
-            <div className="grid sm:grid-cols-2 gap-4 mb-8">
-              <div className="flex items-center p-4 bg-blue-50 rounded-lg">
-                <Mail className="h-6 w-6 text-blue-600 mr-3" />
-                <div>
-                  <p className="font-medium text-gray-900">Email</p>
-                  <p className="text-sm text-gray-600">support@gstassistant.com</p>
-                </div>
-              </div>
-              <div className="flex items-center p-4 bg-green-50 rounded-lg">
-                <Phone className="h-6 w-6 text-green-600 mr-3" />
-                <div>
-                  <p className="font-medium text-gray-900">Phone</p>
-                  <p className="text-sm text-gray-600">1800-123-4567</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Contact Form */}
+        {/* Contact Us Section */}
+        <section>
+          <h2 className="text-3xl font-bold text-gray-700 dark:text-gray-200 mb-6 flex items-center"><Mail className="mr-3 text-indigo-500" /> Contact Us</h2>
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Name *
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-              
               <div>
-                <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-                  Subject *
-                </label>
-                <input
-                  type="text"
-                  id="subject"
-                  value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+                <label htmlFor="name" className="block text-sm font-medium text-gray-600 dark:text-gray-300">Full Name</label>
+                <input type="text" id="name" name="name" value={formData.name} onChange={handleInputChange} className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:border-gray-600" required />
               </div>
-              
               <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                  Message *
-                </label>
-                <textarea
-                  id="message"
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  required
-                  rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                />
+                <label htmlFor="email" className="block text-sm font-medium text-gray-600 dark:text-gray-300">Email Address</label>
+                <input type="email" id="email" name="email" value={formData.email} onChange={handleInputChange} className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:border-gray-600" required />
               </div>
-              
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105"
-              >
-                <MessageSquare className="h-5 w-5 inline mr-2" />
-                Send Message
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-gray-600 dark:text-gray-300">Message</label>
+                <textarea id="message" name="message" value={formData.message} onChange={handleInputChange} rows={4} className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:border-gray-600" required></textarea>
+              </div>
+              <button type="submit" className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                <Send className="mr-2" /> Send Message
               </button>
             </form>
+            <div className="mt-8 text-center text-gray-600 dark:text-gray-400">
+              <p>You can also reach us at:</p>
+              <a href="tel:+1234567890" className="flex items-center justify-center mt-2 text-indigo-600 hover:underline"><Phone className="mr-2" /> +1 (234) 567-890</a>
+            </div>
           </div>
-        </div>
+        </section>
       </div>
-
-      {/* Footer */}
-      <footer className="bg-white border-t py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500">
-          <p>© 2025 GST Registration Assistant. Powered by AI.</p>
-        </div>
-      </footer>
     </div>
   );
 };

@@ -1,146 +1,235 @@
-import React from 'react';
-import { CheckCircle, ExternalLink, FileText } from 'lucide-react';
+
+import React, { useState, useEffect } from 'react';
+import GstnAndArn from '../GstnAndArn';
+import { ChevronRight, Lock, Mail, ArrowLeft, Volume2 } from 'lucide-react';
+import AIPoweredGuidance from '../AIPoweredGuidance'; // Import the component
+import { useAIGuidance } from '../../hooks/useAIGuidance';
+
+// --- Guidance Data ---
+const verificationGuidance = {
+  affirmation: {
+    voice: "Please check this box to declare that all information you\'ve provided is true and correct.",
+    text: "By checking this box, you are making a legal declaration that all the information you have provided is true and correct to the best of your knowledge."
+  },
+  authSignatory: {
+    voice: "Now, please select the person who is legally authorized to sign on behalf of the business.",
+    text: "Select the name of the person who is legally authorized to sign on behalf of the business. This is usually a director, partner, or proprietor."
+  },
+  place: {
+    voice: "Finally, enter the city or town where you are signing this declaration.",
+    text: "Enter the city or town where you are signing this declaration. This is typically the location of your principal place of business."
+  },
+  submit_dsc: {
+    voice: "You can submit using a Digital Signature Certificate, if you have one.",
+    text: "Choose this option to sign and submit the application using your DSC. The certificate must be registered on the GST portal."
+  },
+  submit_evc: {
+    voice: "Or, you can submit using an Electronic Verification Code sent to your mobile.",
+    text: "Choose this option to receive a one-time password (OTP) on your registered mobile and email. This is the most common method."
+  }
+};
+
 
 interface StepProps {
   formData: any;
   updateFormData: (data: any) => void;
   onNext: () => void;
   onBack: () => void;
-  isFirstStep: boolean;
-  isLastStep: boolean;
+  activeField: string | null;
+  setActiveField: (field: string | null) => void;
 }
 
 const VerificationSubmitStep: React.FC<StepProps> = ({
   formData,
   onBack,
-  isFirstStep
+  activeField,
+  setActiveField,
 }) => {
-  const handleFinish = () => {
-    // In a real app, this would redirect to the GST portal
-    window.open('https://www.gst.gov.in', '_blank');
+  const [affirmed, setAffirmed] = useState(false);
+  const [authSignatory, setAuthSignatory] = useState('');
+  const [place, setPlace] = useState('');
+  const [designation, setDesignation] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [signatories, setSignatories] = useState<string[]>([]);
+
+  const { handleFocus, currentGuidance } = useAIGuidance(activeField, setActiveField, verificationGuidance);
+
+  useEffect(() => {
+    const promoterNames = formData.promoters?.map((p: any) => p.name) || [];
+    const authorizedSignatoryName = formData.authorizedSignatory?.name ? [formData.authorizedSignatory.name] : [];
+    const allSignatories = [...new Set([...promoterNames, ...authorizedSignatoryName])];
+    
+    const primaryPromoter = formData.promoters?.find((p: any) => p.isPrimary);
+    if (primaryPromoter) {
+      setAuthSignatory(primaryPromoter.name);
+    } else if (formData.authorizedSignatory?.name) {
+      setAuthSignatory(formData.authorizedSignatory.name);
+    }
+
+    setSignatories(allSignatories);
+  }, [formData]);
+
+  const handleSubmit = (method: 'DSC' | 'EVC') => {
+    if (!isFormValid) return;
+    console.log(`Submitting with ${method}`);
+    setIsSubmitted(true);
   };
 
+  const handleButtonClick = (e: React.MouseEvent, fieldName: string) => {
+    e.stopPropagation();
+    handleFocus(fieldName);
+  };
+
+  const isFormValid = affirmed && authSignatory && place && designation;
+
+  if (isSubmitted) {
+    return <GstnAndArn formData={formData} />;
+  }
+
   return (
-    <div className="bg-white rounded-xl shadow-lg p-8">
-      <div className="mb-6">
-        <div className="flex items-center mb-4">
-          <CheckCircle className="h-8 w-8 text-green-600 mr-3" />
-          <h2 className="text-2xl font-bold text-gray-900">Registration Summary</h2>
-        </div>
-        <p className="text-gray-600">
-          Review your information before proceeding to the official GST portal for final submission.
-        </p>
-      </div>
-
-      <div className="space-y-6">
-        {/* Summary Cards */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">Business Information</h3>
-            <div className="space-y-1 text-sm text-gray-600">
-              <p><strong>PAN:</strong> {formData.pan || 'Not provided'}</p>
-              <p><strong>Legal Name:</strong> {formData.legalName || 'Not provided'}</p>
-              <p><strong>Trade Name:</strong> {formData.tradeName || 'Not provided'}</p>
-              <p><strong>Constitution:</strong> {formData.constitution || 'Not provided'}</p>
-            </div>
-          </div>
-
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">Contact Details</h3>
-            <div className="space-y-1 text-sm text-gray-600">
-              <p><strong>Email:</strong> {formData.email || 'Not provided'}</p>
-              <p><strong>Mobile:</strong> {formData.mobile || 'Not provided'}</p>
-              <p><strong>Aadhaar:</strong> {formData.aadhaar ? '****-****-' + formData.aadhaar.slice(-4) : 'Not provided'}</p>
-            </div>
-          </div>
-
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">Principal Address</h3>
-            <div className="text-sm text-gray-600">
-              {formData.principalAddress ? (
-                <p>
-                  {formData.principalAddress.buildingNo}, {formData.principalAddress.street}<br />
-                  {formData.principalAddress.locality}<br />
-                  {formData.principalAddress.city}, {formData.principalAddress.state}<br />
-                  PIN: {formData.principalAddress.pincode}
-                </p>
-              ) : (
-                <p>Not provided</p>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">Bank Details</h3>
-            <div className="space-y-1 text-sm text-gray-600">
-              <p><strong>Account:</strong> {formData.bankDetails?.accountNumber ? '****' + formData.bankDetails.accountNumber.slice(-4) : 'Not provided'}</p>
-              <p><strong>Bank:</strong> {formData.bankDetails?.bankName || 'Not provided'}</p>
-              <p><strong>IFSC:</strong> {formData.bankDetails?.ifscCode || 'Not provided'}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Additional Information */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-2">Additional Information</h3>
-          <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
-            <div>
-              <p><strong>Additional Places:</strong> {formData.additionalPlaces?.length || 0} locations</p>
-              <p><strong>Promoters:</strong> {formData.promoters?.length || 0} persons</p>
-            </div>
-            <div>
-              <p><strong>Authorized Signatory:</strong> {formData.authorizedSignatory?.name || 'Not provided'}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Next Steps */}
-        <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6">
-          <div className="flex items-start">
-            <FileText className="h-6 w-6 text-green-600 mr-3 mt-1" />
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Next Steps</h3>
-              <ul className="text-sm text-gray-700 space-y-2">
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">1.</span>
-                  <span>Click "Finish & Go to GST Portal" to access the official government portal</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">2.</span>
-                  <span>Upload required documents (PAN card, address proof, bank certificate, etc.)</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">3.</span>
-                  <span>Pay the GST registration fees (if applicable)</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">4.</span>
-                  <span>Submit your application and wait for verification (3-7 working days)</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">5.</span>
-                  <span>Receive your GSTIN (GST Identification Number) upon approval</span>
-                </li>
-              </ul>
-            </div>
-          </div>
+    <div className="space-y-8 bg-primary dark:bg-dark-primary text-primary dark:text-dark-primary" onClick={() => setActiveField(null)}>
+      <AIPoweredGuidance show={!!activeField} guidance={currentGuidance} />
+      <h2 className="text-3xl font-bold text-secondary dark:text-dark-secondary">Application Verification</h2>
+      
+      <div 
+        className="p-6 bg-primary dark:bg-dark-primary rounded-lg shadow-md border border-secondary dark:border-dark-secondary relative"
+        onFocus={() => handleFocus('affirmation')}
+      >
+        <div className="flex items-start">
+          <input 
+            type="checkbox" 
+            id="affirmation"
+            checked={affirmed} 
+            onChange={() => setAffirmed(!affirmed)} 
+            className="h-5 w-5 text-indigo-600 border-secondary dark:border-dark-secondary rounded mt-1 focus:ring-indigo-500 bg-primary dark:bg-dark-primary"
+          />
+          <label htmlFor="affirmation" className="ml-3 block text-secondary dark:text-dark-secondary">
+            I/We hereby solemnly affirm and declare that the information given herein above is true and correct to the best of my/our knowledge and belief and nothing has been concealed therefrom.
+          </label>
         </div>
       </div>
 
-      <div className="flex justify-between mt-8">
-        <button
-          onClick={onBack}
-          disabled={isFirstStep}
-          className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="relative">
+          <label htmlFor="authSignatory" className="block text-sm font-medium text-secondary dark:text-dark-secondary mb-1">
+            Name of Authorized Signatory <span className="text-red-500">*</span>
+             <button type="button" onClick={(e) => handleButtonClick(e, 'authSignatory')} className="ml-2 text-secondary dark:text-dark-secondary hover:text-indigo-600 align-middle">
+                <Volume2 size={16}/>
+            </button>
+          </label>
+          <select 
+            id="authSignatory" 
+            value={authSignatory} 
+            onChange={(e) => setAuthSignatory(e.target.value)} 
+            onFocus={() => handleFocus('authSignatory')}
+            className="w-full p-3 border border-secondary dark:border-dark-secondary rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-primary dark:bg-dark-primary text-secondary dark:text-dark-secondary"
+          >
+            <option value="">Select Signatory</option>
+            <option value="Primary Promoter">Primary Promoter</option>
+            {signatories.map(name => (
+                <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="relative">
+          <label htmlFor="place" className="block text-sm font-medium text-secondary dark:text-dark-secondary mb-1">
+            Place <span className="text-red-500">*</span>
+             <button type="button" onClick={(e) => handleButtonClick(e, 'place')} className="ml-2 text-secondary dark:text-dark-secondary hover:text-indigo-600 align-middle">
+                <Volume2 size={16}/>
+            </button>
+          </label>
+          <input 
+            type="text" 
+            id="place" 
+            value={place} 
+            onChange={(e) => setPlace(e.target.value)} 
+            onFocus={() => handleFocus('place')}
+            className="w-full p-3 border border-secondary dark:border-dark-secondary rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-primary dark:bg-dark-primary text-secondary dark:text-dark-secondary"
+            placeholder="Enter city/town"
+          />
+        </div>
+        <div
+          onFocus={() => handleFocus('designation')}
         >
+          <label htmlFor="designation" className="block text-sm font-medium text-secondary dark:text-dark-secondary mb-1">
+            Designation / Status <span className="text-red-500">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="designation" 
+            value={designation} 
+            onChange={(e) => setDesignation(e.target.value)} 
+            className="w-full p-3 border border-secondary dark:border-dark-secondary rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-primary dark:bg-dark-primary text-secondary dark:text-dark-secondary"
+            placeholder="e.g., Director, Partner"
+          />
+        </div>
+        <div
+          onFocus={() => handleFocus('date')}
+        >
+          <label htmlFor="date" className="block text-sm font-medium text-secondary dark:text-dark-secondary mb-1">
+            Date <span className="text-red-500">*</span>
+          </label>
+          <input 
+            type="date" 
+            id="date" 
+            value={date} 
+            onChange={(e) => setDate(e.target.value)} 
+            className="w-full p-3 border border-secondary dark:border-dark-secondary rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-primary dark:bg-dark-primary text-secondary dark:text-dark-secondary"
+          />
+        </div>
+      </div>
+
+      <div className={`p-4 rounded-lg text-center transition-opacity duration-300 ${isFormValid ? 'opacity-0 h-0 p-0' : 'opacity-100 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200'}`}>
+        <p>Please fill all mandatory fields and affirm the declaration to proceed.</p>
+      </div>
+
+      <div className="space-y-4 pt-4 border-t border-secondary dark:border-dark-secondary">
+        <h3 className="text-xl font-semibold text-center text-secondary dark:text-dark-secondary">Choose Your Submission Method</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="relative">
+            <button 
+              onClick={(e) => { e.stopPropagation(); handleSubmit('DSC'); }} 
+              onFocus={() => handleFocus('submit_dsc')}
+              disabled={!isFormValid}
+              className={`w-full p-6 rounded-lg text-left flex items-center justify-between transition-all duration-300 transform 
+                ${isFormValid 
+                  ? 'bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 hover:-translate-y-1' 
+                  : 'bg-secondary dark:bg-dark-secondary text-primary dark:text-dark-primary cursor-not-allowed'}`}
+            >
+              <div>
+                <h4 className="font-bold text-lg flex items-center"><Lock className="mr-2"/> SUBMIT WITH DSC</h4>
+                <p className="text-sm mt-1 opacity-90">Use your Digital Signature Certificate</p>
+              </div>
+              <ChevronRight className={`transition-transform ${isFormValid ? 'translate-x-1' : ''}`} />
+            </button>
+          </div>
+          
+          <div className="relative">
+            <button 
+              onClick={(e) => { e.stopPropagation(); handleSubmit('EVC'); }} 
+              onFocus={() => handleFocus('submit_evc')}
+              disabled={!isFormValid}
+              className={`w-full p-6 rounded-lg text-left flex items-center justify-between transition-all duration-300 transform 
+                ${isFormValid 
+                  ? 'bg-green-600 text-white shadow-lg hover:bg-green-700 hover:-translate-y-1' 
+                  : 'bg-secondary dark:bg-dark-secondary text-primary dark:text-dark-primary cursor-not-allowed'}`}
+            >
+              <div>
+                <h4 className="font-bold text-lg flex items-center"><Mail className="mr-2"/> SUBMIT WITH EVC</h4>
+                <p className="text-sm mt-1 opacity-90">Use an Electronic Verification Code</p>
+              </div>
+              <ChevronRight className={`transition-transform ${isFormValid ? 'translate-x-1' : ''}`} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-start mt-8">
+        <button onClick={onBack} className="flex items-center px-6 py-2 bg-secondary dark:bg-dark-secondary text-primary dark:text-dark-primary rounded-md hover:bg-opacity-80 font-semibold transition-colors">
+          <ArrowLeft className="mr-2 h-4 w-4"/>
           Back
-        </button>
-        <button
-          onClick={handleFinish}
-          className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg hover:from-green-700 hover:to-blue-700 font-semibold"
-        >
-          Finish & Go to GST Portal
-          <ExternalLink className="h-5 w-5 ml-2" />
         </button>
       </div>
     </div>

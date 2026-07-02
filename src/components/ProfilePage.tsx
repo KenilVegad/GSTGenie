@@ -1,54 +1,105 @@
-import React, { useState } from 'react';
-import { User, Edit3, Save, X, Building, Mail, Phone, MapPin } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Edit3, Save, Briefcase, MapPin, Building, Mail, Phone, Globe, Bell } from 'lucide-react';
+import { db } from '../firebase'; // Assuming you have firebase initialized and db exported from this file
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import Footer from './Footer';
 
-const ProfilePage: React.FC = () => {
+const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
-    name: 'Rajesh Kumar',
-    email: 'rajesh.kumar@example.com',
-    phone: '+91 98765 43210',
-    company: 'Kumar Enterprises Pvt Ltd',
-    designation: 'Managing Director',
-    address: 'Mumbai, Maharashtra',
-    gstNumber: 'Not Registered',
-    registrationDate: 'N/A'
+    name: 'Akshat Sharma',
+    designation: 'Director',
+    company: 'AS Tech Solutions Pvt. Ltd.',
+    gstin: '07ABCDE1234F1Z5',
+    address: '7A, Business Bay, Industrial Area, Sector 2',
+    city: 'Jaipur',
+    state: 'Rajasthan',
+    pincode: '302012',
+    email: 'akshat.sharma@astech.com',
+    phone: '+91-9876543210',
+    website: 'astechsolutions.com',
+    userId: 'sampleUser' // Hardcoded for now, you should get this from your auth context
+  });
+  const [notificationSettings, setNotificationSettings] = useState({
+    email: true,
+    sms: false,
+    push: true,
+    whatsapp: false,
   });
 
-  const [editedProfile, setEditedProfile] = useState(profile);
+  useEffect(() => {
+    const userDocRef = doc(db, 'users', profile.userId);
+    const unsubscribe = onSnapshot(userDocRef, (doc) => {
+      if (doc.exists()) {
+        setNotificationSettings(doc.data().notifications);
+      }
+    });
+    return () => unsubscribe();
+  }, [profile.userId]);
 
   const handleEdit = () => {
     setIsEditing(true);
-    setEditedProfile(profile);
   };
 
   const handleSave = () => {
-    setProfile(editedProfile);
     setIsEditing(false);
+    // Here you would typically save the updated profile data to a backend
   };
 
-  const handleCancel = () => {
-    setEditedProfile(profile);
-    setIsEditing(false);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setProfile(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleChange = (field: string, value: string) => {
-    setEditedProfile(prev => ({ ...prev, [field]: value }));
+  const handleNotificationToggle = async (channel: string) => {
+    const newSettings = { 
+      ...notificationSettings, 
+      [channel]: !notificationSettings[channel as keyof typeof notificationSettings] 
+    };
+    setNotificationSettings(newSettings);
+    const userDocRef = doc(db, 'users', profile.userId);
+    await setDoc(userDocRef, { notifications: newSettings }, { merge: true });
   };
+
+  const InputField = ({ label, name, value, icon: Icon, isEditing }: any) => (
+    <div className="flex items-center space-x-4">
+      <Icon className="h-5 w-5 text-gray-400" />
+      <div>
+        <label className="text-sm text-gray-500 dark:text-gray-400">{label}</label>
+        {isEditing ? (
+          <input
+            type="text"
+            name={name}
+            value={value}
+            onChange={handleInputChange}
+            className="text-gray-900 dark:text-gray-100 font-semibold bg-transparent border-b-2 border-blue-200 focus:outline-none focus:border-blue-500"
+          />
+        ) : (
+          <p className="text-gray-900 dark:text-gray-100 font-semibold">{value}</p>
+        )}
+      </div>
+    </div>
+  );
+
+  const NotificationToggle = ({ label, channel, enabled }: any) => (
+    <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded-lg">
+      <span className="font-medium text-gray-700 dark:text-gray-300">{label}</span>
+      <button 
+        onClick={() => handleNotificationToggle(channel)}
+        className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+          enabled ? 'bg-blue-600' : 'bg-gray-400'
+        }`}>
+        <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-200 ease-in-out ${
+            enabled ? 'translate-x-6' : 'translate-x-1'
+          }`} />
+      </button>
+    </div>
+  )
 
   return (
-    <div className="min-h-screen pt-16">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-            <User className="h-10 w-10 text-white" />
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">User Profile</h1>
-          <p className="text-xl text-gray-600">
-            Manage your account information and GST registration details
-          </p>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 font-sans">
+      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
           {/* Profile Header */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6">
             <div className="flex items-center justify-between">
@@ -70,187 +121,81 @@ const ProfilePage: React.FC = () => {
                   Edit Profile
                 </button>
               ) : (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={handleSave}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    Save
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Cancel
-                  </button>
-                </div>
+                <button
+                  onClick={handleSave}
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </button>
               )}
             </div>
           </div>
 
-          {/* Profile Content */}
-          <div className="p-8">
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Personal Information */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                  <User className="h-5 w-5 mr-2 text-blue-600" />
-                  Personal Information
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editedProfile.name}
-                        onChange={(e) => handleChange('name', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    ) : (
-                      <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{profile.name}</p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    {isEditing ? (
-                      <input
-                        type="email"
-                        value={editedProfile.email}
-                        onChange={(e) => handleChange('email', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    ) : (
-                      <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg flex items-center">
-                        <Mail className="h-4 w-4 mr-2 text-gray-500" />
-                        {profile.email}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                    {isEditing ? (
-                      <input
-                        type="tel"
-                        value={editedProfile.phone}
-                        onChange={(e) => handleChange('phone', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    ) : (
-                      <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg flex items-center">
-                        <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                        {profile.phone}
-                      </p>
-                    )}
-                  </div>
-                </div>
+          {/* Profile Details */}
+          <div className="p-8 space-y-8">
+            {/* Notification Settings */}
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center">
+                <Bell className="h-6 w-6 mr-3 text-indigo-500" />
+                Notification Settings
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <NotificationToggle label="Email Notifications" channel="email" enabled={notificationSettings.email} />
+                <NotificationToggle label="SMS Alerts" channel="sms" enabled={notificationSettings.sms} />
+                <NotificationToggle label="Push Notifications" channel="push" enabled={notificationSettings.push} />
+                <NotificationToggle label="WhatsApp Messages" channel="whatsapp" enabled={notificationSettings.whatsapp} />
               </div>
+            </div>
 
-              {/* Business Information */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                  <Building className="h-5 w-5 mr-2 text-green-600" />
-                  Business Information
-                </h3>
-                <div className="space-y-4">
+            {/* Company Details */}
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center">
+                <Briefcase className="h-6 w-6 mr-3 text-indigo-500" />
+                Company Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputField label="Company Name" name="company" value={profile.company} icon={Building} isEditing={isEditing} />
+                <div className="flex items-center space-x-4">
+                  <img src="https://img.icons8.com/color/48/gst.png" alt="GST Icon" className="h-6 w-6"/>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editedProfile.company}
-                        onChange={(e) => handleChange('company', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    ) : (
-                      <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{profile.company}</p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Designation</label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editedProfile.designation}
-                        onChange={(e) => handleChange('designation', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    ) : (
-                      <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{profile.designation}</p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editedProfile.address}
-                        onChange={(e) => handleChange('address', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    ) : (
-                      <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg flex items-center">
-                        <MapPin className="h-4 w-4 mr-2 text-gray-500" />
-                        {profile.address}
-                      </p>
-                    )}
+                    <label className="text-sm text-gray-500 dark:text-gray-400">GSTIN</label>
+                    <p className="text-gray-900 dark:text-gray-100 font-semibold tracking-wider">{profile.gstin}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* GST Status */}
-            <div className="mt-8 pt-8 border-t border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">GST Registration Status</h3>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                  <h4 className="font-medium text-yellow-800 mb-2">Current Status</h4>
-                  <p className="text-2xl font-bold text-yellow-600 mb-2">{profile.gstNumber}</p>
-                  <p className="text-sm text-yellow-700">
-                    Complete your registration to get your GSTIN
-                  </p>
-                </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                  <h4 className="font-medium text-blue-800 mb-2">Registration Date</h4>
-                  <p className="text-2xl font-bold text-blue-600 mb-2">{profile.registrationDate}</p>
-                  <p className="text-sm text-blue-700">
-                    Date when GST registration was completed
-                  </p>
-                </div>
+            {/* Location Details */}
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center">
+                <MapPin className="h-6 w-6 mr-3 text-indigo-500" />
+                Registered Address
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputField label="Address" name="address" value={profile.address} icon={Building} isEditing={isEditing} />
+                <InputField label="City" name="city" value={profile.city} icon={Building} isEditing={isEditing} />
+                <InputField label="State" name="state" value={profile.state} icon={Building} isEditing={isEditing} />
+                <InputField label="Pincode" name="pincode" value={profile.pincode} icon={Building} isEditing={isEditing} />
               </div>
             </div>
 
-            {/* Account Actions */}
-            <div className="mt-8 pt-8 border-t border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Account Actions</h3>
-              <div className="grid sm:grid-cols-3 gap-4">
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors">
-                  Download Certificate
-                </button>
-                <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors">
-                  View Returns
-                </button>
-                <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition-colors">
-                  Update Details
-                </button>
+            {/* Contact Details */}
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center">
+                <Mail className="h-6 w-6 mr-3 text-indigo-500" />
+                Contact Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputField label="Email Address" name="email" value={profile.email} icon={Mail} isEditing={isEditing} />
+                <InputField label="Phone Number" name="phone" value={profile.phone} icon={Phone} isEditing={isEditing} />
+                <InputField label="Website" name="website" value={profile.website} icon={Globe} isEditing={isEditing} />
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="bg-white border-t py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500">
-          <p>© 2025 GST Registration Assistant. Powered by AI.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

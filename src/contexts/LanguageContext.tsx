@@ -1,56 +1,41 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode } from 'react';
+import { useTranslation, UseTranslationResponse } from 'react-i18next';
 
-export type Language = 'en' | 'hi' | 'gu';
+type Language = 'en' | 'es' | 'fr' | 'hi' | 'gu';
 
-interface LanguageContextType {
+// Extend the context type to include the translation function `t`
+interface LanguageContextType extends Pick<UseTranslationResponse, 't' | 'i18n'> {
   language: Language;
-  setLanguage: (lang: Language) => void;
-  t: (key: string, options?: any) => string;
+  setLanguage: (language: Language) => void;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export const useLanguage = () => {
-  const context = useContext(LanguageContext);
-  if (!context) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
-  }
-  return context;
-};
-
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState<Language>('en');
-  const [translations, setTranslations] = useState<any>({});
+  const { t, i18n } = useTranslation();
 
-  useEffect(() => {
-    const loadTranslations = async () => {
-      try {
-        const en = await import('../locales/en.json');
-        const hi = await import('../locales/hi.json');
-        const gu = await import('../locales/gu.json');
-        setTranslations({ en: en.default, hi: hi.default, gu: gu.default });
-      } catch (error) {
-        console.error("Failed to load translations:", error);
-      }
-    };
-    loadTranslations();
-  }, []);
-
-  const t = (key: string): string => {
-    const keys = key.split('.');
-    let result = translations[language];
-    for (const k of keys) {
-      result = result?.[k];
-      if (result === undefined) {
-        return key; 
-      }
-    }
-    return result || key;
+  const value = {
+    language,
+    setLanguage: (lang: Language) => {
+      setLanguage(lang);
+      i18n.changeLanguage(lang);
+    },
+    t,
+    i18n,
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );
+};
+
+export const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (context === undefined) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
 };

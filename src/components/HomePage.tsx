@@ -1,197 +1,236 @@
-import React, { useState } from 'react';
-import { FilePenLine, Bell, Folder, MessageCircle, X, ArrowRight, Star } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
+import * as React from 'react';
+import { ArrowRight, Star, ChevronDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import BeforeAfterSlider from './BeforeAfterSlider';
+import ChatbotPage from './ChatbotPage';
+import Footer from './Footer';
 
 interface HomePageProps {
   onStartRegistration: () => void;
-  onShowReminders: () => void;
   onShowDocumentRepository: () => void;
 }
 
-const HomePage: React.FC<HomePageProps> = ({ onStartRegistration, onShowReminders, onShowDocumentRepository }) => {
-  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
-  const { t } = useLanguage();
+const HomePage: React.FC<HomePageProps> = ({ onStartRegistration, onShowDocumentRepository }) => {
+  const { t } = useTranslation();
+  const [openFaq, setOpenFaq] = React.useState<number | null>(null);
+  const [showChatbot, setShowChatbot] = React.useState(false);
 
-  const features = [
+  const handleShowChatbot = () => {
+    setShowChatbot(true);
+  };
+
+  const handleCloseChatbot = () => {
+    setShowChatbot(false);
+  };
+
+  const services = [
     {
-      icon: <FilePenLine className="h-8 w-8 text-white" />,
-      title: t('homepage.features.feature1_title'),
-      description: t('homepage.features.feature1_desc'),
+      imageUrl: 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80',
+      title: t('feature1_title'),
+      description: t('feature1_description'),
       action: onStartRegistration,
+      link: ''
     },
     {
-      icon: <Bell className="h-8 w-8 text-white" />,
-      title: t('homepage.features.feature2_title'),
-      description: t('homepage.features.feature2_desc'),
-      action: onShowReminders,
+      imageUrl: 'https://images.unsplash.com/photo-1589254065909-b7086229d08c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80',
+      title: t('feature4_title'),
+      description: "Get instant answers to your GST questions with our AI-powered chatbot.",
+      action: handleShowChatbot,
+      link: ''
     },
     {
-      icon: <Folder className="h-8 w-8 text-white" />,
-      title: t('homepage.features.feature3_title'),
-      description: t('homepage.features.feature3_desc'),
+      imageUrl: 'https://images.unsplash.com/photo-1583521214690-73421a1829a9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80',
+      title: t('feature3_title'),
+      description: t('feature3_description'),
       action: onShowDocumentRepository,
+      link: ''
     },
     {
-      icon: <MessageCircle className="h-8 w-8 text-white" />,
-      title: t('homepage.features.feature4_title'),
-      description: t('homepage.features.feature4_desc'),
-      action: () => setIsChatbotOpen(true),
+      imageUrl: 'https://images.unsplash.com/photo-1587573089734-09cb69c0f2b4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80',
+      title: 'Compliance Dashboard',
+      description: 'Manage all your compliance tasks from one central dashboard.',
+      action: () => {},
+      link: '/compliance'
     },
   ];
 
   const testimonials = [
     {
-      quote: t('homepage.testimonials.testimonial1_quote'),
-      name: t('homepage.testimonials.testimonial1_name'),
-      title: t('homepage.testimonials.testimonial1_title'),
+      name: "Ravi Patel",
+      role: "Small Business Owner",
+      review: "GSTGenie has been a lifesaver for my business. The automated reminders and easy registration process have saved me countless hours.",
+      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
     },
     {
-      quote: t('homepage.testimonials.testimonial2_quote'),
-      name: t('homepage.testimonials.testimonial2_name'),
-      title: t('homepage.testimonials.testimonial2_title'),
+      name: "Priya Sharma",
+      role: "Chartered Accountant",
+      review: "I recommend GSTGenie to all my clients. The document repository is incredibly useful, and the AI chatbot is surprisingly knowledgeable.",
+      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
     },
-     {
-      quote: t('homepage.testimonials.testimonial3_quote'),
-      name: t('homepage.testimonials.testimonial3_name'),
-      title: t('homepage.testimonials.testimonial3_title'),
+    {
+      name: "Anil Kumar",
+      role: "E-commerce Seller",
+      review: "As an online seller, GST compliance can be a headache. GSTGenie makes it simple and straightforward. I couldn't be happier!",
+      avatar: "https://randomuser.me/api/portraits/men/56.jpg",
     },
   ];
 
+  const gstNews = [
+    "CBIC issues clarification on GST rates for certain goods and services.",
+    "47th GST Council meeting recommends changes in GST rates for various items.",
+    "E-invoicing mandatory for businesses with turnover above Rs 10 crore from October 1.",
+    "Input tax credit (ITC) to be available only if the same is reflected in GSTR-2B.",
+    "GSTN launches new feature to track refund status in real-time.",
+  ];
+
+  const faqData = [
+    {
+      question: "What is GSTGenie and what does it do?",
+      answer: "GSTGenie is a comprehensive platform designed to simplify GST compliance for businesses and individuals. It offers services like easy GST registration, automated reminders for deadlines, a secure document repository, and an intelligent AI chatbot to answer your GST-related queries.",
+    },
+    {
+      question: "Who can use GSTGenie?",
+      answer: "GSTGenie is designed for everyone, from small business owners and e-commerce sellers to chartered accountants and large enterprises. Our goal is to make GST compliance accessible and hassle-free for all.",
+    },
+    {
+      question: "Is my data secure with GSTGenie?",
+      answer: "Absolutely. We prioritize the security and confidentiality of your data. Our platform uses industry-standard encryption and security protocols to ensure your information is always protected.",
+    },
+    {
+      question: "How does the AI chatbot work?",
+      answer: "Our AI chatbot is powered by advanced natural language processing models. It has been trained on a vast database of GST laws, rules, and regulations to provide you with accurate and instant answers to your questions.",
+    },
+  ];
+
+  if (showChatbot) {
+    return <ChatbotPage onClose={handleCloseChatbot} />;
+  }
+
   return (
-    <div className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200">
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-28">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl lg:text-6xl font-extrabold text-gray-900 dark:text-white mb-6">
-            {t('homepage.hero.title')}
-          </h1>
-          <p className="text-lg lg:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-10">
-            {t('homepage.hero.subtitle')}
-          </p>
-          <button
-            onClick={onStartRegistration}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-full text-lg transition-transform transform hover:scale-105 shadow-lg"
-          >
-            {t('homepage.hero.cta')} <ArrowRight className="inline-block ml-2" />
-          </button>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className="py-20 bg-gray-50 dark:bg-gray-800">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white">{t('homepage.howItWorks.title')}</h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 mt-4">{t('homepage.howItWorks.subtitle')}</p>
+    <div className="font-sans text-primary bg-primary dark:bg-dark-primary dark:text-dark-primary">
+      {/* GST News Ticker */}
+      <div className="bg-secondary dark:bg-dark-secondary py-2 overflow-hidden">
+        <div className="relative flex overflow-x-hidden">
+          <div className="py-2 animate-marquee whitespace-nowrap text-primary dark:text-dark-primary">
+            {gstNews.map((news, index) => (
+              <span key={index} className="text-lg mx-4">{news}</span>
+            ))}
           </div>
-          <div className="flex flex-col md:flex-row justify-center items-center space-y-8 md:space-y-0 md:space-x-12">
-            <div className="flex items-center flex-col text-center">
-              <div className="bg-blue-600 text-white rounded-full h-16 w-16 flex items-center justify-center text-2xl font-bold">1</div>
-              <h3 className="text-xl font-semibold mt-4 mb-2 dark:text-white">{t('homepage.howItWorks.step1_title')}</h3>
-              <p className="text-gray-600 dark:text-gray-400 max-w-xs">{t('homepage.howItWorks.step1_desc')}</p>
-            </div>
-            <div className="text-gray-400 hidden md:block">→</div>
-            <div className="flex items-center flex-col text-center">
-              <div className="bg-blue-600 text-white rounded-full h-16 w-16 flex items-center justify-center text-2xl font-bold">2</div>
-              <h3 className="text-xl font-semibold mt-4 mb-2 dark:text-white">{t('homepage.howItWorks.step2_title')}</h3>
-              <p className="text-gray-600 dark:text-gray-400 max-w-xs">{t('homepage.howItWorks.step2_desc')}</p>
-            </div>
-            <div className="text-gray-400 hidden md:block">→</div>
-            <div className="flex items-center flex-col text-center">
-              <div className="bg-blue-600 text-white rounded-full h-16 w-16 flex items-center justify-center text-2xl font-bold">3</div>
-              <h3 className="text-xl font-semibold mt-4 mb-2 dark:text-white">{t('homepage.howItWorks.step3_title')}</h3>
-              <p className="text-gray-600 dark:text-gray-400 max-w-xs">{t('homepage.howItWorks.step3_desc')}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white">{t('homepage.features.title')}</h2>
-             <p className="text-lg text-gray-600 dark:text-gray-400 mt-4">{t('homepage.features.subtitle')}</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <div
-                key={index}
-                className="bg-blue-600 text-white p-8 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300 transform hover:-translate-y-2 cursor-pointer flex flex-col items-center text-center"
-                onClick={feature.action}
-              >
-                <div className="bg-blue-700 rounded-full p-4 mb-6">
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                <p className="opacity-90">{feature.description}</p>
-              </div>
+          <div className="absolute top-0 py-2 animate-marquee2 whitespace-nowrap text-primary dark:text-dark-primary">
+            {gstNews.map((news, index) => (
+              <span key={index} className="text-lg mx-4">{news}</span>
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Hero Section */}
+      <section className="text-center py-20 px-4">
+        <h1 className="text-4xl md:text-6xl font-bold mb-4 text-secondary dark:text-dark-secondary">{t('home_hero_title')}</h1>
+        <p className="mt-4 text-lg md:text-xl text-secondary dark:text-dark-secondary max-w-3xl mx-auto mb-8">{t('home_hero_subtitle')}</p>
+        <button
+          onClick={onStartRegistration}
+          className="bg-accent hover:bg-opacity-80 text-primary dark:text-dark-primary font-semibold py-3 px-8 rounded-md transition-all duration-300 transform hover:scale-105 text-lg inline-flex items-center shadow-lg"
+        >
+          {t('home_hero_button')}
+          <ArrowRight className="h-5 w-5 ml-3" />
+        </button>
       </section>
+
+      {/* Key Services Section */}
+      <section className="py-20 px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-secondary dark:text-dark-secondary">{t('features_title')}</h2>
+          <p className="mt-2 text-lg text-secondary dark:text-dark-secondary">{t('features_subtitle')}</p>
+        </div>
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {services.map((service, index) => {
+            const cardContent = (
+              <div 
+                className="group bg-primary dark:bg-dark-primary border border-secondary dark:border-dark-secondary rounded-lg text-center cursor-pointer hover:border-accent transition-all duration-300 transform hover:-translate-y-2 overflow-hidden hover:shadow-2xl hover:shadow-accent/50 h-full flex flex-col"
+              >
+                <div className="overflow-hidden">
+                  <img src={service.imageUrl} alt={service.title} className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"/>
+                </div>
+                <div className="p-6 flex flex-col flex-grow">
+                  <h3 className="text-xl font-semibold text-secondary dark:text-dark-secondary">{service.title}</h3>
+                  <p className="mt-2 text-secondary dark:text-dark-secondary">{service.description}</p>
+                </div>
+              </div>
+            );
+
+            if (service.link) {
+              return <Link key={index} to={service.link} onClick={service.action}>{cardContent}</Link>;
+            } else {
+              return <div key={index} onClick={service.action}>{cardContent}</div>;
+            }
+          })}
+        </div>
+      </section>
+
+      {/* Before and After Slider Section */}
+      <BeforeAfterSlider />
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-gray-50 dark:bg-gray-800">
-        <div className="container mx-auto px-4">
-           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white">{t('homepage.testimonials.title')}</h2>
+      <section className="py-20 px-4 bg-secondary dark:bg-dark-secondary">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-primary dark:text-dark-primary">{t('testimonials_title')}</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <div key={index} className="bg-white dark:bg-gray-700 p-8 rounded-lg shadow-md">
-                <div className="flex items-center mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-5 w-5 text-yellow-400" fill="currentColor" />
-                  ))}
+              <div key={index} className="bg-primary dark:bg-dark-primary border border-secondary dark:border-dark-secondary rounded-lg p-8 space-y-4">
+                <div className="flex items-center space-x-4">
+                  <img src={testimonial.avatar} alt={testimonial.name} className="w-16 h-16 rounded-full"/>
+                  <div>
+                    <h4 className="text-lg font-semibold text-secondary dark:text-dark-secondary">{testimonial.name}</h4>
+                    <p className="text-secondary dark:text-dark-secondary">{testimonial.role}</p>
+                  </div>
                 </div>
-                <p className="text-gray-600 dark:text-gray-300 mb-6">"{testimonial.quote}"</p>
-                <div>
-                  <p className="font-semibold text-gray-900 dark:text-white">{testimonial.name}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{testimonial.title}</p>
+                <p className="text-secondary dark:text-dark-secondary">{testimonial.review}</p>
+                <div className="flex text-yellow-400">
+                  <Star className="w-5 h-5" />
+                  <Star className="w-5 h-5" />
+                  <Star className="w-5 h-5" />
+                  <Star className="w-5 h-5" />
+                  <Star className="w-5 h-5" />
                 </div>
               </div>
             ))}
           </div>
         </div>
       </section>
-      
-      {/* Final CTA Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4 text-center">
-           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-6">{t('homepage.finalCta.title')}</h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-10">
-            {t('homepage.finalCta.subtitle')}
-          </p>
-          <button
-            onClick={onStartRegistration}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-full text-lg transition-transform transform hover:scale-105 shadow-lg"
-          >
-            {t('homepage.finalCta.cta')}
-          </button>
-        </div>
-      </section>
 
-      {/* Chatbot Modal */}
-      {isChatbotOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-lg h-2/3 flex flex-col">
-            <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('homepage.chatbot.title')}</h3>
-              <button onClick={() => setIsChatbotOpen(false)} className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors">
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            <div className="flex-grow">
-              <iframe
-                src="https://cdn.botpress.cloud/webchat/v3.2/shareable.html?configUrl=https://files.bpcontent.cloud/2025/09/01/08/20250901081839-TX2K5EY7.json"
-                className="w-full h-full border-0"
-                title={t('homepage.chatbot.title')}
-              ></iframe>
-            </div>
+      {/* FAQ Section */}
+      <section className="py-20 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-secondary dark:text-dark-secondary">Frequently Asked Questions</h2>
+          </div>
+          <div className="space-y-4">
+            {faqData.map((faq, index) => (
+              <div key={index} className="border border-secondary dark:border-dark-secondary rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                  className="w-full text-left p-6 flex justify-between items-center"
+                >
+                  <h3 className="text-lg font-semibold text-secondary dark:text-dark-secondary">{faq.question}</h3>
+                  <ChevronDown
+                    className={`w-5 h-5 transition-transform duration-300 ${openFaq === index ? 'transform rotate-180' : ''}`}
+                  />
+                </button>
+                {openFaq === index && (
+                  <div className="p-6 pt-0 text-secondary dark:text-dark-secondary">
+                    <p>{faq.answer}</p>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
-      )}
+      </section>
+      <Footer />
     </div>
   );
 };
