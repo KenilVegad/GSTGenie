@@ -55,7 +55,7 @@ Many young entrepreneurs hesitate to start a business due to the complexity of G
 
 ```bash
 git clone https://github.com/KenilVegad/GSTGenie.git
-cd GSTGenie
+cd GSTease
 npm install
 npm run dev
 ```
